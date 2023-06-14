@@ -1,0 +1,28 @@
+# Environement files
+.env
+.env.*
+.env.prod
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+Records
+/Records
+__pycache__
+*/__pycache__/*
+*/*/__pycache__/*
+*/*/*/__pycache__/*
+*/*/*/*/__pycache__/*
+
+
+# Files
+api.py
+test.py
+login.py
+downloads.py
+apps/bets/external_data_apis

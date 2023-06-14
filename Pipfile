@@ -1,0 +1,21 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+python-dotenv = "*"
+django-cors-headers = "*"
+django = "<=3.3"
+djangorestframework = "==3.13.1"
+django-filter = "*"
+flake8 = "*"
+django-model-utils = "*"
+drf-yasg = "*"
+django-rest-knox = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.10"
+python_full_version = "3.10.6"
