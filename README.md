@@ -19,7 +19,7 @@ The next challenges are:
 
 	
 ## Technologies
-Main technologies used in this project are:
+Main packages used in this project are:
 * Django==3.2.19
 * django-rest-knox==4.2.0
 * djangorestframework==3.13.1

@@ -9,25 +9,18 @@ def format_result(data: dict):
     return list(map(formatter, data['response']))
 
 
-def get_pre_match_bets_list(fixture_id: str, bet_id: str):
-    endpoint = "/odds"
-    params = {
-        'timezone': TIMEZONE,
-        'fixture': fixture_id,
-        'bookmaker': 11,
-    }
+def get_pre_match_bets_list():
+    endpoint = "/odds/bets"
+    params = {}
     data = api_football.perform_request(method='GET', route=endpoint, params=params)
-    return format_result(data)
+    return data['response']
 
 
-def get_in_play_match_bets_list(fixture_id: str, bet_id: str):
-    endpoint = "/odds/live"
-    params = {
-        'fixture': fixture_id,
-    }
+def get_in_play_match_bets_list():
+    endpoint = "/odds/live/bets"
+    params = {}
     data = api_football.perform_request(method='GET', route=endpoint, params=params)
-    print(data)
-    return format_result(data)
+    return data['response']
 
 
 def get_odds_for_bet_of_pre_match_type(fixture_id: str, bet_id: str):
@@ -36,6 +29,7 @@ def get_odds_for_bet_of_pre_match_type(fixture_id: str, bet_id: str):
         'timezone': TIMEZONE,
         'fixture': fixture_id,
         'bookmaker': 11,
+        'bet': bet_id
     }
     data = api_football.perform_request(method='GET', route=endpoint, params=params)
     return format_result(data)
@@ -45,7 +39,7 @@ def get_odds_for_bet_of_in_play_match_type(fixture_id: str, bet_id: str):
     endpoint = "/odds/live"
     params = {
         'fixture': fixture_id,
+        'bet': bet_id
     }
     data = api_football.perform_request(method='GET', route=endpoint, params=params)
-    print(data)
     return format_result(data)

@@ -34,13 +34,12 @@ class FixturesViewSet(ViewSet):
 class BetViewSet(ViewSet):
     permission_classes = (permissions.IsAuthenticated,)
 
-    @action(methods=["GET"], detail=False, url_path='possibles-for-fixture')
-    def possible_for_fixture(self, request, *args, **kwargs):
-        fixture = request.GET.get('fixture')
-        odd_type = request.GET.get('odd_type')
-        if fixture is None:
-            raise APIException('Vous devez entrer l\' identifiant du match')
-        data = bets_bl.get_available_bets_list_for_fixture(fixture_id=fixture, odd_type=odd_type)
+    @action(methods=["GET"], detail=False, url_path='possibles-bets')
+    def possible_bet(self, request, *args, **kwargs):
+        match_status = request.GET.get('status')
+        if status is None:
+            raise APIException("Vous devez entrer le paramètre 'status' relatif au statut du match.")
+        data = bets_bl.get_available_bets_list_for_fixture(odd_type=match_status)
         return Response(data=data, status=status.HTTP_200_OK)
 
     @action(methods=["GET"], detail=False, url_path='possible-bet-for-fixture-detail')

@@ -12,6 +12,7 @@ from django.contrib.auth import authenticate
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from commons.messages import Messages
 from apps.users.models import User, Transaction, DepositTransaction, WithdrawTransaction
 from apps.utils.models import Country
 
@@ -50,7 +51,7 @@ class AuthTokenSerializer(serializers.Serializer):
                 msg = "Impossible de se connecter avec les identifiants renseignés"
                 raise serializers.ValidationError(msg, code='authorization')
         else:
-            msg = _('Vous devez inclure "email" et "password.')
+            msg = 'Vous devez inclure "email" et "password.'
             raise serializers.ValidationError(msg, code='authorization')
 
         attrs['user'] = user
@@ -143,9 +144,11 @@ class InheritanceTransactionSerializer(serializers.ModelSerializer):
             elif isinstance(child, WithdrawTransaction):
                 serializer = WithdrawTransactionSerializer(
                     instance=child, context=self.context)
+
             else:
                 print(type(child))
                 raise Exception('Unexpected type of tagged object')
+
             return serializer.data
 
         return None
@@ -157,7 +160,7 @@ class InheritanceTransactionSerializer(serializers.ModelSerializer):
             'amount', 'qr_code'
         )
 
-        read_only_fiels = ('local_id')
+        read_only_fiels = ('local_id', )
 
 
 class ChangePasswordSerializer(serializers.Serializer):
@@ -171,10 +174,10 @@ class ChangePasswordSerializer(serializers.Serializer):
         new_password = attrs.get('new_password', '')
         if old_password == '':
             raise ValidationError(
-                {'old_password': "THIS_FIELD_MUST_NOT_BE_EMPTY"})
+                {'old_password': Messages.THIS_FIELD_MUST_NOT_BE_EMPTY})
         if new_password == '':
             raise ValidationError(
-                {'new_password': "THIS_FIELD_MUST_NOT_BE_EMPTY"})
+                {'new_password': Messages.THIS_FIELD_MUST_NOT_BE_EMPTY})
 
         return super().validate(attrs)
 
