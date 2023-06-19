@@ -25,6 +25,7 @@ def format_result(data: dict):
             "status": raw_fixture['fixture']['status'],
             'odd_type': odd_type,
             "league": {
+                "id": raw_fixture['league']['id'],
                 "name": raw_fixture['league']['name'],
                 "season": raw_fixture['league']['season'],
             },

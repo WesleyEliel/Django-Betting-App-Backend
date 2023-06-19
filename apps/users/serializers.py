@@ -80,6 +80,7 @@ class UserSerializer(serializers.ModelSerializer):
 
         if password == "":
             raise ValidationError({"password": 'PASSWORD_NEEDED'})
+
         if email is not None:
             if User.objects.filter(email=email).exists():
                 raise ValidationError(
@@ -93,6 +94,7 @@ class UserSerializer(serializers.ModelSerializer):
         instance.set_password(password)
         instance.ask_verification()
         instance.save()
+        financial_account = instance.related_financial_account
         return instance
 
 
@@ -125,11 +127,18 @@ class TransactionSerializer(serializers.ModelSerializer):
 class DepositTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = DepositTransaction
+        fields = TransactionSerializer.Meta.fields + ('url', 'status')
 
 
 class WithdrawTransactionSerializer(serializers.ModelSerializer):
     class Meta:
-        model = DepositTransaction
+        model = WithdrawTransaction
+        fields = TransactionSerializer.Meta.fields + ('way', 'status')
+        read_only_fiels = ('local_id', 'type')
+
+        extra_kwargs = {
+            'amount': {'required': True},
+        }
 
 
 class InheritanceTransactionSerializer(serializers.ModelSerializer):
@@ -156,11 +165,10 @@ class InheritanceTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = (
-            'pk', 'description', 'type', 'gateway_id', 'local_id', 'user',
-            'amount', 'qr_code'
+            'pk', 'description', 'type', 'local_id', 'user', 'amount'
         )
 
-        read_only_fiels = ('local_id', )
+        read_only_fiels = ('local_id',)
 
 
 class ChangePasswordSerializer(serializers.Serializer):

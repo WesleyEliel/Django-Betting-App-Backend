@@ -1,7 +1,10 @@
 from django.db import models
 from uuid import uuid4
 
+from django.utils import timezone
+
 from .managers import DeletedManager, SoftDeleteManager, DefaultManager
+
 
 # Create your models here.
 
@@ -24,3 +27,20 @@ class AbstractCommonBaseModel(models.Model):
 
     class Meta:
         abstract = True
+
+    def delete(self, *args, **kwargs):
+        related_models_dataset = [
+            (rel.on_delete == models.CASCADE, rel.get_accessor_name(), rel.related_model._meta.verbose_name)
+            for rel in self._meta.related_objects
+        ]
+        # Propose to user to delete all linked objects by foreign key or many to many before trying to delete the
+        # current objects
+
+        for on_delete_is_cascade, accessor, verbose_name in related_models_dataset:
+            if on_delete_is_cascade:
+                objects = getattr(self, accessor).all()
+                objects.update(is_deleted=True, deleted_at=timezone.now())
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save()
+        return super(AbstractCommonBaseModel, self).delete()

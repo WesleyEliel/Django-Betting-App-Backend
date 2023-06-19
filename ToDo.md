@@ -1,0 +1,2 @@
+- Implement restore for common based model
+- ReImplement restore methode in DeletedQuerySet, in order to include deep restoration (related models objects restoration)

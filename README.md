@@ -5,6 +5,7 @@
 * [Technologies](#technologies)
 * [Prepare Env](#prepare-env)
 * [Setup](#setup)
+* [!!!! Documentation !!!!](#documentation)
 
 ## Info
 This project is for test purpose and is a backend for a betting app.
@@ -36,3 +37,8 @@ $ pipenv shell
 $ pipenv install
 $ python manage.py runserver
 ```
+
+## Documentation
+At the index page of the API, a swagger interface is generated to help on using it.
+Postman is the other documentation tool used in this project. It is use for testing views and logics, and sample results are saved for each possible request/endpoint;
+The environnement and the collection are saved under the following directory: *documentation/postman/*

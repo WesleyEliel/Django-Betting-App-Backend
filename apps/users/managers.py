@@ -36,7 +36,6 @@ class CustomUserManager(BaseUserManager):
 
         group, created = Group.objects.get_or_create(name='Admin')
         user.groups.add(group)
-
         user.save()
         return user
 
@@ -52,7 +51,10 @@ class CustomUserManager(BaseUserManager):
             raise ValueError(_('Superuser must have is_staff=True.'))
         if extra_fields.get('is_superuser') is not True:
             raise ValueError(_('Superuser must have is_superuser=True.'))
-        return self.create_user(email, password, **extra_fields)
+        user = self.create_user(email, password, **extra_fields)
+        # Get Financial Account
+        financial_account = user.related_financial_account
+        return user
 
     def with_perm(self, perm, is_active=True, include_superusers=True, backend=None, obj=None):
         if backend is None:

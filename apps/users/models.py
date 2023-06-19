@@ -7,7 +7,10 @@ Created on June 5, 2023
 """
 
 import logging
+import operator
+import random
 from decimal import Decimal
+from dotenv import dotenv_values
 
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
@@ -25,6 +28,9 @@ from commons.models import AbstractCommonBaseModel
 
 logger = logging.getLogger(__name__)
 logger.setLevel('INFO')
+
+env = dotenv_values('.env.prod')
+SUPER_ADMIN_EMAIL = env.get('SUPER_ADMIN_EMAIL', None)
 
 SEX_CHOICES = (
     ("F", "Féminin"),
@@ -83,9 +89,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         """Return the short name for the user."""
         return self.first_name
 
-    def set_phone(self, phone):
-        self.phone = phone
-        self.save()
+    @staticmethod
+    def get_admin_account():
+        return User.objects.get(email=SUPER_ADMIN_EMAIL)
 
     def set_conf_num(self, code):
         if code and code != '':
@@ -105,7 +111,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         self.save()
 
     def __str__(self) -> str:
-        return f'{self.email} & {self.get_full_name()}'
+        if self.get_full_name() != "":
+            return f'{self.email} & {self.get_full_name()}'
+        else:
+            return f'{self.email}'
 
 
 class UserFinancialAccount(AbstractCommonBaseModel):
@@ -118,7 +127,7 @@ class UserFinancialAccount(AbstractCommonBaseModel):
     #    verbose_name="Pourcentage sur vente par ticket", max_digits=15, decimal_places=5, default=3.0)
 
     def __str__(self) -> str:
-        return str("Compte financier de " + self.user.get_full_name())
+        return str("Compte financier de " + self.user.__str__())
 
     @staticmethod
     def get_for_user(user):
@@ -130,6 +139,9 @@ class UserFinancialAccount(AbstractCommonBaseModel):
     class Meta:
         verbose_name = 'Compte financier'
         verbose_name_plural = 'Comptes financiers'
+
+
+User.related_financial_account = property(lambda u: UserFinancialAccount.get_for_user(u))
 
 
 class Transaction(AbstractCommonBaseModel):
@@ -156,9 +168,24 @@ class Transaction(AbstractCommonBaseModel):
                               max_length=128, blank=False, null=False)
     inheritance_objects = InheritanceManager()
 
+    class Meta:
+        verbose_name = "Transaction"
+        verbose_name_plural = "Transactions"
+
     def __str__(self) -> str:
         return str(
             str(self.date) + ", Transaction financière lié au compte financier de " + self.user.get_full_name())
+
+    def update_user_financial_account(self):
+        financial_account = self.user.related_financial_account
+        if self.type == Transaction.DEPOSIT:
+            financial_account.balance += self.amount
+        else:
+            financial_account.balance -= self.amount
+        financial_account.save()
+
+    def process(self):
+        raise NotImplementedError()
 
     def save(self, *args, **kwargs):
         if self.type not in self.TRANSACTION_TYPES:
@@ -168,22 +195,17 @@ class Transaction(AbstractCommonBaseModel):
             self.local_id = get_random_string(15)
         super().save(*args, **kwargs)
 
-    def process(self):
-        raise NotImplementedError()
-
-    class Meta:
-        verbose_name = "Transaction"
-        verbose_name_plural = "Transactions"
-
 
 class DepositTransaction(Transaction):
     DEPOSIT_TRANSACTION_INITIALIZED = 'DEPOSIT_TRANSACTION_INITIALIZED'
     DEPOSIT_TRANSACTION_PAID = 'DEPOSIT_TRANSACTION_PAID'
+    DEPOSIT_TRANSACTION_FAILED = 'DEPOSIT_TRANSACTION_FAILED'
     DEPOSIT_TRANSACTION_COMPLETED = 'DEPOSIT_TRANSACTION_COMPLETED'
 
     DEPOSIT_TRANSACTION_STATUS_CHOICES = (
         (DEPOSIT_TRANSACTION_INITIALIZED, DEPOSIT_TRANSACTION_INITIALIZED),
         (DEPOSIT_TRANSACTION_PAID, DEPOSIT_TRANSACTION_PAID),
+        (DEPOSIT_TRANSACTION_FAILED, DEPOSIT_TRANSACTION_FAILED),
         (DEPOSIT_TRANSACTION_COMPLETED, DEPOSIT_TRANSACTION_COMPLETED),
     )
 
@@ -195,7 +217,13 @@ class DepositTransaction(Transaction):
     tracker = FieldTracker()
 
     def process(self):
-        pass
+        success = random.choice([True, False])
+        if success:
+            self.status = DepositTransaction.DEPOSIT_TRANSACTION_COMPLETED
+        else:
+            self.status = DepositTransaction.DEPOSIT_TRANSACTION_FAILED
+        self.save()
+        return {'success': success}
 
     @property
     def is_completed(self):
@@ -209,6 +237,10 @@ class DepositTransaction(Transaction):
     def is_payment_initialized(self):
         return self.status == DepositTransaction.DEPOSIT_TRANSACTION_INITIALIZED
 
+    def change_status_to(self, status: str) -> None:
+        self.status = status
+        self.save()
+
     class Meta:
         verbose_name = "Paiement"
         verbose_name_plural = "Paiements"
@@ -216,15 +248,17 @@ class DepositTransaction(Transaction):
 
 class WithdrawTransaction(Transaction):
     STATUS_INITIALIZED = 'STATUS_INITIALIZED'
-    STATUS_CREATE = 'STATUS_CREATE'
+    STATUS_CREATED = 'STATUS_CREATED'
     STATUS_FINISHED = 'STATUS_FINISHED'
-    STATUS_UPDATE = 'STATUS_UPDATE'
+    STATUS_FAILED = 'STATUS_FAILED'
+    STATUS_UPDATED = 'STATUS_UPDATED'
 
     STATUS_CHOICES = (
-        (STATUS_CREATE, STATUS_CREATE),
+        (STATUS_CREATED, STATUS_CREATED),
         (STATUS_INITIALIZED, STATUS_INITIALIZED),
+        (STATUS_FAILED, STATUS_FAILED),
         (STATUS_FINISHED, STATUS_FINISHED),
-        (STATUS_UPDATE, STATUS_UPDATE),
+        (STATUS_UPDATED, STATUS_UPDATED),
     )
 
     way = models.CharField(verbose_name="Moyen Utilisé Pour la transaction",
@@ -232,23 +266,26 @@ class WithdrawTransaction(Transaction):
     tracker = FieldTracker()
 
     status = models.CharField(
-        max_length=120, choices=STATUS_CHOICES, default=STATUS_CREATE)
+        max_length=120, choices=STATUS_CHOICES, default=STATUS_CREATED)
 
     def process(self):
-        pass
-
-    def retrieve_related_financial_account(self):
-        return UserFinancialAccount.get_for_user(self.user)
+        success = random.choice([True, False])
+        if success:
+            self.status = WithdrawTransaction.STATUS_FINISHED
+        else:
+            self.status = WithdrawTransaction.STATUS_FAILED
+        self.save()
+        return {'success': success}
 
     def can_be_processed(self):
-        return self.retrieve_related_financial_account().can_withdraw_amount(float(self.amount))
+        return self.user.related_financial_account.can_withdraw_amount(float(self.amount))
 
     def update_user_financial_account(self):
-        if not self.status == WithdrawTransaction.STATUS_UPDATE:
-            financial_account = self.retrieve_related_financial_account()
+        if not self.status == WithdrawTransaction.STATUS_UPDATED:
+            financial_account = self.related_financial_account
 
             financial_account.amount -= Decimal(self.amount)
-            self.status = WithdrawTransaction.STATUS_UPDATE
+            self.status = WithdrawTransaction.STATUS_UPDATED
             financial_account.save()
             self.save()
 
