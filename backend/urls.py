@@ -26,7 +26,7 @@ from drf_yasg import openapi
 
 schema_view = get_schema_view(
     openapi.Info(
-        title="Footbal, Betting / Booking API with Django ",
+        title="Football, Betting / Booking API with Django ",
         default_version='v1',
         description="API, created by Wesley Eliel MONTCHO alias DevBackend7.",
         terms_of_service="",
