@@ -17,7 +17,7 @@ def complete_deposit_transaction(sender, instance: DepositTransaction, created, 
             'status') == DepositTransaction.DEPOSIT_TRANSACTION_INITIALIZED:
         if instance.status == DepositTransaction.DEPOSIT_TRANSACTION_PAID:
             instance.update_user_financial_account()
-        instance.change_status_to(DepositTransaction.DEPOSIT_TRANSACTION_COMPLETED)
+        DepositTransaction.objects.filter(pk=instance.pk).update(status=DepositTransaction.DEPOSIT_TRANSACTION_COMPLETED)
 
 
 @receiver(post_save, sender=WithdrawTransaction)

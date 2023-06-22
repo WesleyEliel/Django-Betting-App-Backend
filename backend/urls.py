@@ -21,13 +21,12 @@ from django.contrib import admin
 from django.urls import path, include
 
 from rest_framework import permissions
-from rest_framework.authtoken import views
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
 schema_view = get_schema_view(
     openapi.Info(
-        title="Erudis Test Project API",
+        title="Footbal, Betting / Booking API with Django ",
         default_version='v1',
         description="API, created by Wesley Eliel MONTCHO alias DevBackend7.",
         terms_of_service="",

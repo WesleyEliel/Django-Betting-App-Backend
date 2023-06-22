@@ -10,7 +10,7 @@ import logging
 
 from django.contrib.auth import authenticate
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, NotAcceptable
 
 from commons.messages import Messages
 from apps.users.models import User, Transaction, DepositTransaction, WithdrawTransaction
@@ -128,17 +128,31 @@ class DepositTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = DepositTransaction
         fields = TransactionSerializer.Meta.fields + ('url', 'status')
+        read_only_fiels = ('local_id', 'type', 'url', 'status')
+
+        extra_kwargs = {
+            'amount': {'required': True},
+        }
 
 
 class WithdrawTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = WithdrawTransaction
         fields = TransactionSerializer.Meta.fields + ('way', 'status')
-        read_only_fiels = ('local_id', 'type')
+        read_only_fiels = ('local_id', 'type', 'status')
 
         extra_kwargs = {
             'amount': {'required': True},
         }
+    
+    def create(self, validated_data):
+        user = validated_data.get('user')
+        amount = validated_data.get('amount')
+
+        if not WithdrawTransaction.can_be_processed(user=user, amount=amount):
+            raise NotAcceptable(Messages.NOT_ENOUGH_CASH_IN_YOUR_ACCOUNT)
+
+        return super(WithdrawTransactionSerializer, self).create(validated_data)
 
 
 class InheritanceTransactionSerializer(serializers.ModelSerializer):

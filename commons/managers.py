@@ -13,12 +13,7 @@ def get_settings():
 class SoftDeleteQuerySet(models.query.QuerySet):
 
     def delete(self, *args, **kwargs):
-        print("In delete Queryset")
-        print(args)
-        print(kwargs)
         cascade = get_settings()['cascade']
-        print(cascade)
-        print(self.all())
         if cascade:  # delete one by one if cascade
             for obj in self.all():
                 obj.delete(cascade=cascade)

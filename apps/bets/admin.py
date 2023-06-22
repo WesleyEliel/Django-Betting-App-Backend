@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from apps.bets.models import BetHistoryChecker, BetHistoryViewer, BetHistory, League
+from apps.bets.models import BetHistory, League
 from commons.admin import BaseModelAdmin
 
 
@@ -15,7 +15,7 @@ class LeagueAdmin(BaseModelAdmin):
 class BetHistoryAdmin(BaseModelAdmin):
     pass
 
-
+"""
 @admin.register(BetHistoryChecker)
 class BetHistoryCheckerAdmin(BaseModelAdmin):
     pass
@@ -24,3 +24,4 @@ class BetHistoryCheckerAdmin(BaseModelAdmin):
 @admin.register(BetHistoryViewer)
 class BetHistoryViewerAdmin(BaseModelAdmin):
     pass
+"""

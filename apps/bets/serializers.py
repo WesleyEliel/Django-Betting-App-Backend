@@ -18,9 +18,15 @@ class BetHistorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BetHistory
-        fields = ('user', 'bet_id', 'fixture_id', 'competition_id', 'amount', 'result', 'status',)
+        fields = ('user', 'bet_id', 'fixture_id', 'competition_id', 'amount', 'result', 'bet_data', 'status',)
 
-        read_only_fiels = ('result', 'status',)
+        read_only_fiels = ('', '',)
+
+        extra_kwargs = {
+            'bet_data': {'write_only': True},
+            'result': {'read_only': True},
+            'status': {'read_only': True},
+        }
 
     def validate_user(self, value):
         if not self.context['request'].user.is_anonymous:
@@ -31,7 +37,7 @@ class BetHistorySerializer(serializers.ModelSerializer):
         amount = validated_data.get('amount')
 
         if not BetHistory.is_eligible_to_bet(user=user, amount=amount):
-            NotAcceptable(Messages.NOT_ENOUGH_CASH_IN_YOUR_ACCOUNT)
+            raise NotAcceptable(Messages.NOT_ENOUGH_CASH_IN_YOUR_ACCOUNT)
 
         instance = super(BetHistorySerializer, self).create(validated_data)
         instance.initialize()

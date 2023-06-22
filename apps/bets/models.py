@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.core.validators import MinValueValidator
 from django.db import models
+from model_utils import FieldTracker
 
 from apps.users.models import User
 from apps.utils.models import Country
@@ -64,6 +65,7 @@ class BetHistory(AbstractCommonBaseModel):
     result = models.IntegerField(verbose_name="Résultat", default=2, blank=True, choices=BET_RESULTS_CHOICES)
     status = models.CharField(verbose_name="Status", max_length=128, default=BET_STATUS_CREATED, blank=False,
                               choices=BET_STATUS_CHOICES)
+    tracker = FieldTracker()
 
     def __str__(self):
         return f"{self.uuid}"

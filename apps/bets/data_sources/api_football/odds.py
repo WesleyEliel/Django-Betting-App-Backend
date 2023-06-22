@@ -9,6 +9,10 @@ def format_result(data: dict):
     return list(map(formatter, data['response']))
 
 
+def format_result_for_bet_of_pre_match_type(data: dict):
+    return data['response'][0]['bookmakers'][0]['bets']
+
+
 def get_pre_match_bets_list():
     endpoint = "/odds/bets"
     params = {}
@@ -32,7 +36,10 @@ def get_odds_for_bet_of_pre_match_type(fixture_id: str, bet_id: str):
         'bet': bet_id
     }
     data = api_football.perform_request(method='GET', route=endpoint, params=params)
-    return format_result(data)
+    print("\n\n\n\nData\n\n")
+    print(data)
+    print("\n\n\n\nData\n\n")
+    return format_result_for_bet_of_pre_match_type(data)
 
 
 def get_odds_for_bet_of_in_play_match_type(fixture_id: str, bet_id: str):

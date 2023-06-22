@@ -7,7 +7,6 @@ Created on June 5, 2023
 """
 
 import logging
-import operator
 import random
 from decimal import Decimal
 from dotenv import dotenv_values
@@ -164,8 +163,7 @@ class Transaction(AbstractCommonBaseModel):
         verbose_name="Identifiant local", max_length=255, blank=True, null=True)
     user = models.ForeignKey(to=User, on_delete=models.CASCADE, blank=False,
                              verbose_name="Utilisateur", related_name='transactions')
-    amount = models.CharField(verbose_name="Montant",
-                              max_length=128, blank=False, null=False)
+    amount = models.DecimalField(verbose_name="Montant", default=0, max_digits=12, decimal_places=2)
     inheritance_objects = InheritanceManager()
 
     class Meta:
@@ -193,7 +191,7 @@ class Transaction(AbstractCommonBaseModel):
 
         if self.local_id == "" or self.local_id is None:
             self.local_id = get_random_string(15)
-        super().save(*args, **kwargs)
+        super(Transaction, self).save(*args, **kwargs)
 
 
 class DepositTransaction(Transaction):
@@ -217,9 +215,10 @@ class DepositTransaction(Transaction):
     tracker = FieldTracker()
 
     def process(self):
-        success = random.choice([True, False])
+        success = random.choice([True, True, True, False])
+        print(success)
         if success:
-            self.status = DepositTransaction.DEPOSIT_TRANSACTION_COMPLETED
+            self.status = DepositTransaction.DEPOSIT_TRANSACTION_PAID
         else:
             self.status = DepositTransaction.DEPOSIT_TRANSACTION_FAILED
         self.save()
@@ -239,7 +238,7 @@ class DepositTransaction(Transaction):
 
     def change_status_to(self, status: str) -> None:
         self.status = status
-        self.save()
+        self.update()
 
     class Meta:
         verbose_name = "Paiement"
@@ -269,7 +268,7 @@ class WithdrawTransaction(Transaction):
         max_length=120, choices=STATUS_CHOICES, default=STATUS_CREATED)
 
     def process(self):
-        success = random.choice([True, False])
+        success = random.choice([True, True, True, False])
         if success:
             self.status = WithdrawTransaction.STATUS_FINISHED
         else:
@@ -277,14 +276,15 @@ class WithdrawTransaction(Transaction):
         self.save()
         return {'success': success}
 
-    def can_be_processed(self):
-        return self.user.related_financial_account.can_withdraw_amount(float(self.amount))
+    @staticmethod
+    def can_be_processed(user: User, amount: int):
+        return user.is_active and user.related_financial_account.can_withdraw_amount(amount)
 
     def update_user_financial_account(self):
         if not self.status == WithdrawTransaction.STATUS_UPDATED:
-            financial_account = self.related_financial_account
+            financial_account = self.user.related_financial_account
 
-            financial_account.amount -= Decimal(self.amount)
+            financial_account.balance -= Decimal(self.amount)
             self.status = WithdrawTransaction.STATUS_UPDATED
             financial_account.save()
             self.save()
